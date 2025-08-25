@@ -722,6 +722,7 @@ impl Default for ClientHello {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::protocol::Packet;
 
     #[test]
     fn test_client_hello_new() {
@@ -777,10 +778,10 @@ mod tests {
             .with_protocol_version(54328);
 
         let mut buf = BytesMut::new();
-        original.serialize(&mut buf).unwrap();
+        Packet::serialize(&original, &mut buf).unwrap();
 
         let mut read_buf = buf;
-        let deserialized = ClientHello::deserialize(&mut read_buf).unwrap();
+        let deserialized = <ClientHello as Packet>::deserialize(&mut read_buf).unwrap();
 
         assert_eq!(original.client_name, deserialized.client_name);
         assert_eq!(original.client_version_major, deserialized.client_version_major);

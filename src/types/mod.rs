@@ -597,6 +597,91 @@ impl Default for Value {
     }
 }
 
+// Implement From for basic types to enable automatic conversion
+impl From<u8> for Value {
+    fn from(value: u8) -> Self {
+        Value::UInt8(value)
+    }
+}
+
+impl From<u16> for Value {
+    fn from(value: u16) -> Self {
+        Value::UInt16(value)
+    }
+}
+
+impl From<u32> for Value {
+    fn from(value: u32) -> Self {
+        Value::UInt32(value)
+    }
+}
+
+impl From<u64> for Value {
+    fn from(value: u64) -> Self {
+        Value::UInt64(value)
+    }
+}
+
+impl From<u128> for Value {
+    fn from(value: u128) -> Self {
+        Value::UInt128(value)
+    }
+}
+
+impl From<i8> for Value {
+    fn from(value: i8) -> Self {
+        Value::Int8(value)
+    }
+}
+
+impl From<i16> for Value {
+    fn from(value: i16) -> Self {
+        Value::Int16(value)
+    }
+}
+
+impl From<i32> for Value {
+    fn from(value: i32) -> Self {
+        Value::Int32(value)
+    }
+}
+
+impl From<i64> for Value {
+    fn from(value: i64) -> Self {
+        Value::Int64(value)
+    }
+}
+
+impl From<i128> for Value {
+    fn from(value: i128) -> Self {
+        Value::Int128(value)
+    }
+}
+
+impl From<f32> for Value {
+    fn from(value: f32) -> Self {
+        Value::Float32(value)
+    }
+}
+
+impl From<f64> for Value {
+    fn from(value: f64) -> Self {
+        Value::Float64(value)
+    }
+}
+
+impl From<String> for Value {
+    fn from(value: String) -> Self {
+        Value::String(value)
+    }
+}
+
+impl From<&str> for Value {
+    fn from(value: &str) -> Self {
+        Value::String(value.to_string())
+    }
+}
+
 impl Value {
     /// Check if the value is null
     pub fn is_null(&self) -> bool {

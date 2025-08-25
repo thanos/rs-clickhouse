@@ -21,6 +21,9 @@ cargo test --tests
 # Integration tests only
 ./tests/run_tests.sh integration
 
+# Coverage tests only
+./tests/run_tests.sh coverage
+
 # Check ClickHouse availability
 ./tests/run_tests.sh check
 ```
@@ -34,7 +37,8 @@ tests/
 ├── common/                  # Shared test utilities
 │   └── mod.rs              # Common test functions and data
 ├── unit_tests.rs            # Unit tests (no external dependencies)
-└── integration_tests.rs     # Integration tests (requires ClickHouse)
+├── integration_tests.rs     # Integration tests (requires ClickHouse)
+└── coverage_tests.rs        # Coverage tests (exercises edge cases)
 ```
 
 ## 🧪 Test Categories
@@ -68,6 +72,18 @@ Shared functions and test data for consistent testing across all test suites.
 - **Assertions**: Common assertion functions for test validation
 - **Server Detection**: Functions to check ClickHouse availability
 
+### 4. Coverage Tests (`coverage_tests.rs`)
+**Comprehensive coverage testing** - Tests edge cases and exercises more code paths.
+
+- **Error Coverage**: All error variants and edge cases
+- **Value Coverage**: All data type variants and conversions
+- **Complex Type Coverage**: Arrays, maps, tuples, nullable values
+- **Block Coverage**: Block operations and edge cases
+- **Column Coverage**: Column operations and data handling
+- **Row Coverage**: Row access and bounds checking
+- **Client Options Coverage**: All configuration options
+- **Async Coverage**: Asynchronous operations and error handling
+
 ## 🔧 Test Configuration
 
 ### Default Test Settings
@@ -89,6 +105,55 @@ export CLICKHOUSE_TEST_DATABASE=test_db
 export CLICKHOUSE_TEST_USER=test_user
 export CLICKHOUSE_TEST_PASSWORD=test_pass
 ```
+
+## 📊 Coverage Testing
+
+### Code Coverage Tools
+The project supports multiple coverage testing approaches:
+
+#### 1. Coverage Tests (`coverage_tests.rs`)
+Run comprehensive coverage tests that exercise edge cases:
+```bash
+# Run coverage tests only
+./tests/run_tests.sh coverage
+
+# Or directly with cargo
+cargo test --test coverage_tests
+```
+
+#### 2. Coverage Reports with cargo-tarpaulin
+Generate detailed coverage reports:
+```bash
+# Generate HTML coverage report
+./tests/run_tests.sh tarpaulin
+
+# Or directly with cargo-tarpaulin
+cargo tarpaulin --out Html --output-dir coverage
+```
+
+#### 3. Coverage Reports with grcov
+Alternative coverage tool:
+```bash
+# Generate coverage report
+./tests/run_tests.sh coverage-report
+
+# Install grcov first if needed
+cargo install grcov
+```
+
+### Coverage Configuration
+The project includes a `tarpaulin.toml` configuration file that customizes:
+- Output formats (HTML, XML, Markdown)
+- Coverage thresholds
+- Timeout settings
+- Thread configuration
+- Output directory structure
+
+### Coverage Goals
+- **Unit Tests**: 100% coverage of core data structures
+- **Integration Tests**: Coverage of client-server interactions
+- **Coverage Tests**: Edge cases and error conditions
+- **Overall Target**: 90%+ code coverage
 
 ## 🐳 ClickHouse Server Setup
 

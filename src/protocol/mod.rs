@@ -27,6 +27,7 @@ use std::io;
 
 /// ClickHouse protocol packet types
 #[repr(u64)]
+#[derive(PartialEq, Debug)]
 pub enum PacketType {
     /// Client hello packet
     ClientHello = 0,
@@ -305,16 +306,200 @@ pub mod constants {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io::{Cursor, ErrorKind};
 
     #[test]
     fn test_packet_type_conversion() {
         assert_eq!(PacketType::ClientHello.to_u64(), 0);
         assert_eq!(PacketType::ClientQuery.to_u64(), 1);
-        assert_eq!(PacketType::ServerData.to_u64(), 1);
-        assert_eq!(PacketType::ServerException.to_u64(), 2);
+        assert_eq!(PacketType::ServerData.to_u64(), 101);
+        assert_eq!(PacketType::ServerException.to_u64(), 102);
 
         assert_eq!(PacketType::from_u64(0), Some(PacketType::ClientHello));
         assert_eq!(PacketType::from_u64(1), Some(PacketType::ClientQuery));
-        assert_eq!(PacketType::from_u64(100), None);
+        assert_eq!(PacketType::from_u64(100), Some(PacketType::ServerHello));
+    }
+
+    #[test]
+    fn test_all_packet_types() {
+        // Test all client packet types
+        assert_eq!(PacketType::ClientHello.to_u64(), 0);
+        assert_eq!(PacketType::ClientQuery.to_u64(), 1);
+        assert_eq!(PacketType::ClientData.to_u64(), 2);
+        assert_eq!(PacketType::ClientCancel.to_u64(), 3);
+        assert_eq!(PacketType::ClientPing.to_u64(), 4);
+        assert_eq!(PacketType::ClientTablesStatusRequest.to_u64(), 5);
+        assert_eq!(PacketType::ClientKeepAlive.to_u64(), 6);
+        assert_eq!(PacketType::ClientScp.to_u64(), 7);
+        assert_eq!(PacketType::ClientQueryWithExternalTables.to_u64(), 8);
+        assert_eq!(PacketType::ClientQueryWithExternalTables2.to_u64(), 9);
+
+        // Test all server packet types
+        assert_eq!(PacketType::ServerHello.to_u64(), 100);
+        assert_eq!(PacketType::ServerData.to_u64(), 101);
+        assert_eq!(PacketType::ServerException.to_u64(), 102);
+        assert_eq!(PacketType::ServerProgress.to_u64(), 103);
+        assert_eq!(PacketType::ServerPong.to_u64(), 104);
+        assert_eq!(PacketType::ServerEndOfStream.to_u64(), 105);
+        assert_eq!(PacketType::ServerProfileInfo.to_u64(), 106);
+        assert_eq!(PacketType::ServerTotals.to_u64(), 107);
+        assert_eq!(PacketType::ServerExtremes.to_u64(), 108);
+        assert_eq!(PacketType::ServerTablesStatusResponse.to_u64(), 109);
+        assert_eq!(PacketType::ServerLog.to_u64(), 110);
+        assert_eq!(PacketType::ServerTableColumns.to_u64(), 111);
+        assert_eq!(PacketType::ServerPartUUIDs.to_u64(), 112);
+        assert_eq!(PacketType::ServerReadTaskRequest.to_u64(), 113);
+        assert_eq!(PacketType::ServerProfileEvents.to_u64(), 114);
+        assert_eq!(PacketType::ServerTimezoneUpdate.to_u64(), 115);
+        assert_eq!(PacketType::ServerQueryPlan.to_u64(), 116);
+        assert_eq!(PacketType::ServerQueryPlan2.to_u64(), 117);
+
+        // Test from_u64 for all valid values
+        assert_eq!(PacketType::from_u64(0), Some(PacketType::ClientHello));
+        assert_eq!(PacketType::from_u64(1), Some(PacketType::ClientQuery));
+        assert_eq!(PacketType::from_u64(2), Some(PacketType::ClientData));
+        assert_eq!(PacketType::from_u64(3), Some(PacketType::ClientCancel));
+        assert_eq!(PacketType::from_u64(4), Some(PacketType::ClientPing));
+        assert_eq!(PacketType::from_u64(5), Some(PacketType::ClientTablesStatusRequest));
+        assert_eq!(PacketType::from_u64(6), Some(PacketType::ClientKeepAlive));
+        assert_eq!(PacketType::from_u64(7), Some(PacketType::ClientScp));
+        assert_eq!(PacketType::from_u64(8), Some(PacketType::ClientQueryWithExternalTables));
+        assert_eq!(PacketType::from_u64(9), Some(PacketType::ClientQueryWithExternalTables2));
+        assert_eq!(PacketType::from_u64(100), Some(PacketType::ServerHello));
+        assert_eq!(PacketType::from_u64(101), Some(PacketType::ServerData));
+        assert_eq!(PacketType::from_u64(102), Some(PacketType::ServerException));
+        assert_eq!(PacketType::from_u64(103), Some(PacketType::ServerProgress));
+        assert_eq!(PacketType::from_u64(104), Some(PacketType::ServerPong));
+        assert_eq!(PacketType::from_u64(105), Some(PacketType::ServerEndOfStream));
+        assert_eq!(PacketType::from_u64(106), Some(PacketType::ServerProfileInfo));
+        assert_eq!(PacketType::from_u64(107), Some(PacketType::ServerTotals));
+        assert_eq!(PacketType::from_u64(108), Some(PacketType::ServerExtremes));
+        assert_eq!(PacketType::from_u64(109), Some(PacketType::ServerTablesStatusResponse));
+        assert_eq!(PacketType::from_u64(110), Some(PacketType::ServerLog));
+        assert_eq!(PacketType::from_u64(111), Some(PacketType::ServerTableColumns));
+        assert_eq!(PacketType::from_u64(112), Some(PacketType::ServerPartUUIDs));
+        assert_eq!(PacketType::from_u64(113), Some(PacketType::ServerReadTaskRequest));
+        assert_eq!(PacketType::from_u64(114), Some(PacketType::ServerProfileEvents));
+        assert_eq!(PacketType::from_u64(115), Some(PacketType::ServerTimezoneUpdate));
+        assert_eq!(PacketType::from_u64(116), Some(PacketType::ServerQueryPlan));
+        assert_eq!(PacketType::from_u64(117), Some(PacketType::ServerQueryPlan2));
+
+        // Test invalid values
+        assert_eq!(PacketType::from_u64(10), None);
+        assert_eq!(PacketType::from_u64(99), None);
+        assert_eq!(PacketType::from_u64(118), None);
+        assert_eq!(PacketType::from_u64(u64::MAX), None);
+    }
+
+    #[test]
+    fn test_protocol_reader_new() {
+        let data = b"test data";
+        let cursor = Cursor::new(data);
+        let reader = ProtocolReader::new(cursor);
+        
+        assert_eq!(reader.buffer.len(), 0);
+    }
+
+    #[test]
+    fn test_protocol_writer_new() {
+        let data = Vec::new();
+        let writer = ProtocolWriter::new(data);
+        
+        assert_eq!(writer.buffer.len(), 0);
+    }
+
+    #[test]
+    fn test_protocol_writer_write_packet() {
+        let mut writer = ProtocolWriter::new(Vec::new());
+        
+        // Create a mock packet for testing
+        let mock_packet = MockPacket {
+            packet_type: PacketType::ClientHello,
+            data: b"test".to_vec(),
+        };
+        
+        let result = writer.write_packet(&mock_packet);
+        assert!(result.is_ok());
+        
+        // Verify the written data contains header and body
+        let written_data = writer.writer;
+        assert_eq!(written_data.len(), 24); // 16 bytes header + 4 bytes body
+    }
+
+    #[test]
+    fn test_protocol_reader_read_packet_unknown_type() {
+        let mut data = Vec::new();
+        
+        // Write an unknown packet type (999)
+        data.extend_from_slice(&999u64.to_le_bytes());
+        data.extend_from_slice(&4u64.to_le_bytes()); // size
+        data.extend_from_slice(b"test");
+        
+        let mut reader = ProtocolReader::new(Cursor::new(data));
+        let result = reader.read_packet();
+        
+        assert!(result.is_err());
+        if let Err(Error::Protocol(msg)) = result {
+            assert!(msg.contains("Unknown packet type: 999"));
+        } else {
+            panic!("Expected Protocol error");
+        }
+    }
+
+    #[test]
+    fn test_protocol_reader_read_packet_io_error() {
+        // Create a reader that will fail on read
+        let failing_reader = FailingReader;
+        let mut reader = ProtocolReader::new(failing_reader);
+        
+        let result = reader.read_packet();
+        assert!(result.is_err());
+        if let Err(Error::Network(_)) = result {
+            // Expected
+        } else {
+            panic!("Expected Network error");
+        }
+    }
+
+    #[test]
+    fn test_protocol_constants() {
+        // Test constants module values
+        assert_eq!(constants::DEFAULT_PROTOCOL_VERSION, 54428);
+        assert_eq!(constants::DEFAULT_DATABASE, "default");
+        assert_eq!(constants::DEFAULT_USERNAME, "default");
+        assert_eq!(constants::DEFAULT_PASSWORD, "");
+        assert_eq!(constants::DEFAULT_CLIENT_NAME, "clickhouse-rs");
+        assert_eq!(constants::DEFAULT_CLIENT_VERSION, 1);
+        assert_eq!(constants::MAX_PACKET_SIZE, 1024 * 1024 * 1024);
+        assert_eq!(constants::DEFAULT_COMPRESSION_THRESHOLD, 1024);
+    }
+
+    // Mock implementations for testing
+    struct MockPacket {
+        packet_type: PacketType,
+        data: Vec<u8>,
+    }
+
+    impl Packet for MockPacket {
+        fn packet_type(&self) -> PacketType {
+            self.packet_type
+        }
+
+        fn serialize(&self, buf: &mut BytesMut) -> Result<()> {
+            buf.put_slice(&self.data);
+            Ok(())
+        }
+
+        fn deserialize(_buf: &mut BytesMut) -> Result<Self> {
+            unimplemented!("Not needed for this test")
+        }
+    }
+
+    struct FailingReader;
+
+    impl io::Read for FailingReader {
+        fn read(&mut self, _buf: &mut [u8]) -> io::Result<usize> {
+            Err(io::Error::new(ErrorKind::ConnectionRefused, "Connection failed"))
+        }
     }
 }

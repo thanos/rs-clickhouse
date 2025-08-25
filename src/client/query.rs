@@ -506,7 +506,7 @@ mod tests {
 
         let (sql, params, settings) = query.build();
         assert_eq!(sql, "SELECT * FROM table WHERE id = {id}");
-        assert_eq!(params.get("id"), Some(&Value::UInt64(42)));
+        assert_eq!(params.get("id"), Some(&Value::Int32(42)));
         assert_eq!(settings.timeout, Some(Duration::from_secs(10)));
         assert_eq!(settings.max_memory_usage, Some(1024 * 1024));
     }

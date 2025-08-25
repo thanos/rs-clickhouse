@@ -222,6 +222,7 @@ impl Default for ServerHello {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::protocol::Packet;
 
     #[test]
     fn test_server_hello_new() {
@@ -279,10 +280,10 @@ mod tests {
         let original = ServerHello::new("TestServer", 1, 2, 3, 4, 54328, "UTC", "Test Server");
 
         let mut buf = BytesMut::new();
-        original.serialize(&mut buf).unwrap();
+        Packet::serialize(&original, &mut buf).unwrap();
 
         let mut read_buf = buf;
-        let deserialized = ServerHello::deserialize(&mut read_buf).unwrap();
+        let deserialized = <ServerHello as Packet>::deserialize(&mut read_buf).unwrap();
 
         assert_eq!(original.server_name, deserialized.server_name);
         assert_eq!(original.server_version_major, deserialized.server_version_major);
