@@ -147,7 +147,7 @@ impl Default for BlockInfo {
 }
 
 /// Represents a column in a ClickHouse block
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct Column {
     /// Column name
     pub name: String,

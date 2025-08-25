@@ -286,8 +286,10 @@ impl Connection {
         let mut info = HashMap::new();
         for row in result.rows() {
             if let (Some(name), Some(value)) = (row.get(0), row.get(1)) {
-                if let (Ok(name), Ok(value)) = (crate::types::String::try_from(name), crate::types::String::try_from(value)) {
-                    info.insert(name.into_inner(), value.into_inner());
+                if let (Some(name), Some(value)) = (name, value) {
+                    if let (Some(name_str), Some(value_str)) = (extract_string(name), extract_string(value)) {
+                        info.insert(name_str, value_str);
+                    }
                 }
             }
         }
@@ -374,6 +376,29 @@ impl Connection {
     async fn ping_http(&mut self) -> Result<()> {
         // TODO: Implement HTTP ping
         Err(Error::Unsupported("HTTP interface not yet implemented".to_string()))
+    }
+}
+
+/// Helper function to extract string value from Value
+fn extract_string(value: &Value) -> Option<std::string::String> {
+    match value {
+        Value::String(s) => Some(s.clone()),
+        Value::FixedString(bytes) => std::string::String::from_utf8(bytes.clone()).ok(),
+        Value::UInt8(v) => Some(v.to_string()),
+        Value::UInt16(v) => Some(v.to_string()),
+        Value::UInt32(v) => Some(v.to_string()),
+        Value::UInt64(v) => Some(v.to_string()),
+        Value::Int8(v) => Some(v.to_string()),
+        Value::Int16(v) => Some(v.to_string()),
+        Value::Int32(v) => Some(v.to_string()),
+        Value::Int64(v) => Some(v.to_string()),
+        Value::Float32(v) => Some(v.to_string()),
+        Value::Float64(v) => Some(v.to_string()),
+        Value::Date(d) => Some(d.format("%Y-%m-%d").to_string()),
+        Value::DateTime(dt) => Some(dt.format("%Y-%m-%d %H:%M:%S").to_string()),
+        Value::DateTime64(dt) => Some(dt.format("%Y-%m-%d %H:%M:%S").to_string()),
+        Value::UUID(u) => Some(u.to_string()),
+        _ => None,
     }
 }
 
