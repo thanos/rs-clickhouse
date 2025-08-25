@@ -149,11 +149,7 @@ impl From<std::net::AddrParseError> for Error {
     }
 }
 
-impl From<std::io::Error> for Error {
-    fn from(err: std::io::Error) -> Self {
-        Error::Compression(err.to_string())
-    }
-}
+
 
 impl From<uuid::Error> for Error {
     fn from(err: uuid::Error) -> Self {

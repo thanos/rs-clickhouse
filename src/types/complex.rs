@@ -14,11 +14,11 @@ pub struct Array<T>(pub Vec<T>);
 pub struct Nullable<T>(pub Option<T>);
 
 /// Tuple type (heterogeneous collection of values)
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Tuple(pub Vec<Value>);
 
 /// Map type (key-value pairs)
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Map(pub HashMap<String, Value>);
 
 /// UUID type (128-bit unique identifier)

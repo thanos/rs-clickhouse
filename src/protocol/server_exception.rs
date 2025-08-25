@@ -113,11 +113,10 @@ impl Packet for ServerException {
         // Write nested exception
         if let Some(ref nested) = self.nested {
             buf.put_u64_le(1); // Has nested exception
-            // Serialize nested exception to a temporary buffer first
-            let mut nested_buf = BytesMut::new();
-            nested.serialize(&mut nested_buf)?;
-            buf.put_u64_le(nested_buf.len() as u64);
-            buf.extend_from_slice(&nested_buf);
+            // Serialize nested exception using bincode
+            let nested_bytes = bincode::serialize(nested)?;
+            buf.put_u64_le(nested_bytes.len() as u64);
+            buf.extend_from_slice(&nested_bytes);
         } else {
             buf.put_u64_le(0); // No nested exception
         }
@@ -161,8 +160,8 @@ impl Packet for ServerException {
             if buf.remaining() < nested_size {
                 return Err(Error::Protocol("Insufficient data for nested exception".to_string()));
             }
-            let mut nested_buf = buf.copy_to_bytes(nested_size);
-            Some(Box::new(<ServerException as Packet>::deserialize(&mut nested_buf)?))
+            let nested_bytes = buf.copy_to_bytes(nested_size);
+            Some(Box::new(bincode::deserialize::<ServerException>(&nested_bytes)?))
         } else {
             None
         };

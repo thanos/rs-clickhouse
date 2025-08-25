@@ -1,7 +1,7 @@
 //! Date and time data types for ClickHouse
 
 use super::Value;
-use chrono::{DateTime as ChronoDateTime, Datelike, NaiveDate, NaiveDateTime, TimeZone, Timelike, Utc};
+use chrono::{DateTime as ChronoDateTime, Datelike, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Timelike, Utc};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
@@ -84,7 +84,9 @@ impl DateTime {
         minute: u32,
         second: u32,
     ) -> Option<Self> {
-        NaiveDateTime::from_ymd_hms_opt(year, month, day, hour, minute, second).map(DateTime)
+        let date = NaiveDate::from_ymd_opt(year, month, day)?;
+        let time = NaiveTime::from_hms_opt(hour, minute, second)?;
+        Some(DateTime(NaiveDateTime::new(date, time)))
     }
 
     /// Create a new DateTime from a NaiveDateTime
@@ -158,10 +160,11 @@ impl DateTime {
     }
 
     /// Convert to UTC DateTime
-    pub fn with_timezone<Tz: TimeZone>(&self, tz: Tz) -> DateTime<Tz> {
-        tz.from_local_datetime(&self.0).unwrap_or_else(|| {
+    pub fn with_timezone<Tz: TimeZone>(&self, tz: Tz) -> chrono::DateTime<Tz> {
+        tz.from_local_datetime(&self.0).earliest().unwrap_or_else(|| {
             // Fallback to UTC if conversion fails
-            Utc.from_local_datetime(&self.0).unwrap()
+            let utc_dt = Utc.from_local_datetime(&self.0).earliest().unwrap();
+            utc_dt.with_timezone(&tz)
         })
     }
 }
@@ -177,8 +180,9 @@ impl DateTime64 {
         second: u32,
         nanoseconds: u32,
     ) -> Option<Self> {
-        NaiveDateTime::from_ymd_hms_nano_opt(year, month, day, hour, minute, second, nanoseconds)
-            .map(DateTime64)
+        let date = NaiveDate::from_ymd_opt(year, month, day)?;
+        let time = NaiveTime::from_hms_nano_opt(hour, minute, second, nanoseconds)?;
+        Some(DateTime64(NaiveDateTime::new(date, time)))
     }
 
     /// Create a new DateTime64 from a NaiveDateTime
@@ -345,8 +349,9 @@ impl TryFrom<Value> for DateTime {
             }
             Value::UInt64(timestamp) => {
                 // Assume Unix timestamp (seconds since epoch)
-                let datetime = NaiveDateTime::from_timestamp_opt(timestamp as i64, 0)
-                    .ok_or_else(|| "Invalid timestamp".to_string())?;
+                let datetime = chrono::DateTime::from_timestamp(timestamp as i64, 0)
+                    .ok_or_else(|| "Invalid timestamp".to_string())?
+                    .naive_utc();
                 Ok(DateTime(datetime))
             }
             _ => Err(format!("Cannot convert {} to DateTime", value.type_name())),
@@ -381,8 +386,9 @@ impl TryFrom<Value> for DateTime64 {
             }
             Value::UInt64(timestamp) => {
                 // Assume Unix timestamp (seconds since epoch)
-                let datetime = NaiveDateTime::from_timestamp_opt(timestamp as i64, 0)
-                    .ok_or_else(|| "Invalid timestamp".to_string())?;
+                let datetime = chrono::DateTime::from_timestamp(timestamp as i64, 0)
+                    .ok_or_else(|| "Invalid timestamp".to_string())?
+                    .naive_utc();
                 Ok(DateTime64(datetime))
             }
             _ => Err(format!("Cannot convert {} to DateTime64", value.type_name())),
@@ -399,13 +405,13 @@ impl Default for Date {
 
 impl Default for DateTime {
     fn default() -> Self {
-        DateTime(NaiveDateTime::from_timestamp_opt(0, 0).unwrap())
+        DateTime(chrono::DateTime::from_timestamp(0, 0).unwrap().naive_utc())
     }
 }
 
 impl Default for DateTime64 {
     fn default() -> Self {
-        DateTime64(DateTime::from_timestamp(0, 0).unwrap().as_naive_datetime())
+        DateTime64(chrono::DateTime::from_timestamp(0, 0).unwrap().naive_utc())
     }
 }
 
@@ -477,11 +483,6 @@ impl PartialEq<NaiveDateTime> for DateTime64 {
     }
 }
 
-// Implement conversion traits for chrono types
-impl From<Date> for chrono::NaiveDate {
-    fn from(date: Date) -> Self {
-        date.0
-    }
-}
+
 
 

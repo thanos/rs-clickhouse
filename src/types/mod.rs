@@ -5,7 +5,7 @@ mod string;
 mod datetime;
 mod complex;
 mod geometric;
-mod serde_impls;
+
 
 pub use numeric::*;
 pub use string::*;
@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// Represents a ClickHouse data block containing multiple columns
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct Block {
     /// Block metadata
     pub info: BlockInfo,
@@ -213,7 +213,7 @@ impl Column {
 }
 
 /// Column data container
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub enum ColumnData {
     /// UInt8 values
     UInt8(Vec<u8>),
@@ -408,7 +408,7 @@ impl ColumnData {
 }
 
 /// Represents a row in a ClickHouse block
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct Row {
     /// Values in the row
     pub values: Vec<Option<Value>>,
@@ -437,7 +437,7 @@ impl Row {
             .ok_or_else(|| "Value not found or null".to_string())?
             .clone()
             .try_into()
-            .map_err(|e: std::io::Error| e.to_string())
+            .map_err(|e: <T as TryFrom<Value>>::Error| e.to_string())
     }
 
     /// Get the number of values in the row
@@ -472,7 +472,7 @@ impl<'a> Iterator for RowIterator<'a> {
 }
 
 /// Represents a ClickHouse value
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     /// Null value
     Null,

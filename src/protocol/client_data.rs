@@ -7,7 +7,7 @@ use bytes::{Buf, BufMut, BytesMut};
 use serde::{Deserialize, Serialize};
 
 /// Client Data message for sending data blocks
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct ClientData {
     /// Block of data
     pub block: Block,

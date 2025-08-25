@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// Client Query message for executing SQL queries
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct ClientQuery {
     /// Query ID (optional)
     pub query_id: Option<String>,

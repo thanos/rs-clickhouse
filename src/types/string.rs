@@ -258,7 +258,7 @@ impl TryFrom<Value> for LowCardinality {
             Value::FixedString(bytes) => {
                 std::string::String::from_utf8(bytes)
                     .map(LowCardinality)
-                    .map_err(|e| format!("Invalid UTF-8: {}", e))
+                    .map_err(|e| String(format!("Invalid UTF-8: {}", e)))
             }
             Value::UInt8(v) => Ok(LowCardinality(v.to_string())),
             Value::UInt16(v) => Ok(LowCardinality(v.to_string())),
@@ -270,7 +270,7 @@ impl TryFrom<Value> for LowCardinality {
             Value::Int64(v) => Ok(LowCardinality(v.to_string())),
             Value::Float32(v) => Ok(LowCardinality(v.to_string())),
             Value::Float64(v) => Ok(LowCardinality(v.to_string())),
-            _ => Err(format!("Cannot convert {} to LowCardinality", value.type_name())),
+            _ => Err(String(format!("Cannot convert {} to LowCardinality", value.type_name()))),
         }
     }
 }

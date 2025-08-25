@@ -25,7 +25,7 @@ pub struct UInt64(pub u64);
 pub struct UInt128(pub u128);
 
 /// UInt256 type (0 to 2^256 - 1)
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct UInt256(pub u256::U256);
 
 /// Int8 type (-128 to 127)
@@ -49,7 +49,7 @@ pub struct Int64(pub i64);
 pub struct Int128(pub i128);
 
 /// Int256 type (-2^255 to 2^255 - 1)
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Int256(pub i256::I256);
 
 /// Float32 type (32-bit floating point)
@@ -93,7 +93,7 @@ impl fmt::Display for UInt128 {
 
 impl fmt::Display for UInt256 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{:?}", self.0)
     }
 }
 
@@ -585,7 +585,7 @@ impl Default for UInt128 {
 
 impl Default for UInt256 {
     fn default() -> Self {
-        UInt256(u256::U256::ZERO)
+        UInt256(u256::U256::zero())
     }
 }
 
@@ -621,7 +621,7 @@ impl Default for Int128 {
 
 impl Default for Int256 {
     fn default() -> Self {
-        Int256(i256::I256::ZERO)
+        Int256(i256::I256::min_value())
     }
 }
 

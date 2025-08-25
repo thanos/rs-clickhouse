@@ -131,9 +131,11 @@ impl ConnectionPool {
             let mut stats = self.stats.lock().await;
             stats.idle_connections = connections_len;
             stats.total_connections = connections_len;
+            
+            debug!("Initialized pool with {} connections", connections_len);
+        } else {
+            debug!("Initialized pool with 0 connections");
         }
-
-        debug!("Initialized pool with {} connections", connections.len());
         Ok(())
     }
 
@@ -157,11 +159,8 @@ impl ConnectionPool {
             self.options.pool_acquire_timeout,
             self.semaphore.acquire()
         ).await
-            .map_err(|_| {
-                let mut stats = self.stats.lock().await;
-                stats.connection_timeouts += 1;
-                Error::Timeout(self.options.pool_acquire_timeout)
-            })??;
+            .map_err(|_| Error::Timeout(self.options.pool_acquire_timeout))?
+            .map_err(|_| Error::Timeout(self.options.pool_acquire_timeout))?;
 
         // Create a new connection
         let conn = self.create_connection().await?;
@@ -174,10 +173,13 @@ impl ConnectionPool {
             stats.total_wait_time += start_time.elapsed();
         }
 
+        // Drop the permit immediately since we don't need to hold onto it
+        drop(permit);
+        
         Ok(PooledConnection {
             connection: Some(conn),
             pool: self.clone(),
-            _permit: Some(permit),
+            _permit: None,
         })
     }
 

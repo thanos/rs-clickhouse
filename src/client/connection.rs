@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use std::time::Instant;
 use tokio::net::TcpStream;
 use tokio::time::timeout;
+use tokio::io::AsyncWriteExt;
 use tokio_tungstenite::{connect_async, WebSocketStream, MaybeTlsStream};
 
 use tungstenite::Message;
@@ -285,10 +286,8 @@ impl Connection {
         let mut info = HashMap::new();
         for row in result.rows() {
             if let (Some(name), Some(value)) = (row.get(0), row.get(1)) {
-                if let (Some(name_str), Some(value_str)) = (name.as_ref(), value.as_ref()) {
-                    if let (Ok(name), Ok(value)) = (crate::types::String::try_from(name_str.clone()), crate::types::String::try_from(value_str.clone())) {
-                        info.insert(name.into_inner(), value.into_inner());
-                    }
+                if let (Ok(name), Ok(value)) = (crate::types::String::try_from(name), crate::types::String::try_from(value)) {
+                    info.insert(name.into_inner(), value.into_inner());
                 }
             }
         }

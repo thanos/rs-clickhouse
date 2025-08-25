@@ -7,7 +7,7 @@ use bytes::{Buf, BufMut, BytesMut};
 use serde::{Deserialize, Serialize};
 
 /// Server Data message for receiving data blocks
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct ServerData {
     /// Block of data
     pub block: Block,
