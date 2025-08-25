@@ -247,6 +247,8 @@ pub enum ColumnData {
     String(Vec<String>),
     /// FixedString values
     FixedString(Vec<Vec<u8>>),
+    /// LowCardinality values
+    LowCardinality(Vec<String>),
     /// Date values
     Date(Vec<chrono::NaiveDate>),
     /// DateTime values
@@ -285,6 +287,7 @@ impl ColumnData {
             ColumnData::Float64(v) => v.len(),
             ColumnData::String(v) => v.len(),
             ColumnData::FixedString(v) => v.len(),
+            ColumnData::LowCardinality(v) => v.len(),
             ColumnData::Date(v) => v.len(),
             ColumnData::DateTime(v) => v.len(),
             ColumnData::DateTime64(v) => v.len(),
@@ -319,6 +322,7 @@ impl ColumnData {
             ColumnData::Float64(v) => Some(Value::Float64(v[index])),
             ColumnData::String(v) => Some(Value::String(v[index].clone())),
             ColumnData::FixedString(v) => Some(Value::FixedString(v[index].clone())),
+            ColumnData::LowCardinality(v) => Some(Value::LowCardinality(v[index].clone())),
             ColumnData::Date(v) => Some(Value::Date(v[index])),
             ColumnData::DateTime(v) => Some(Value::DateTime(v[index])),
             ColumnData::DateTime64(v) => Some(Value::DateTime64(v[index])),
@@ -353,6 +357,7 @@ impl ColumnData {
             (ColumnData::Float64(v), Value::Float64(val)) => v[index] = val,
             (ColumnData::String(v), Value::String(val)) => v[index] = val,
             (ColumnData::FixedString(v), Value::FixedString(val)) => v[index] = val,
+            (ColumnData::LowCardinality(v), Value::LowCardinality(val)) => v[index] = val,
             (ColumnData::Date(v), Value::Date(val)) => v[index] = val,
             (ColumnData::DateTime(v), Value::DateTime(val)) => v[index] = val,
             (ColumnData::DateTime64(v), Value::DateTime64(val)) => v[index] = val,
@@ -386,6 +391,7 @@ impl ColumnData {
             (ColumnData::Float64(v), Value::Float64(val)) => v.push(val),
             (ColumnData::String(v), Value::String(val)) => v.push(val),
             (ColumnData::FixedString(v), Value::FixedString(val)) => v.push(val),
+            (ColumnData::LowCardinality(v), Value::LowCardinality(val)) => v.push(val),
             (ColumnData::Date(v), Value::Date(val)) => v.push(val),
             (ColumnData::DateTime(v), Value::DateTime(val)) => v.push(val),
             (ColumnData::DateTime64(v), Value::DateTime64(val)) => v.push(val),
@@ -502,6 +508,8 @@ pub enum Value {
     String(String),
     /// FixedString value
     FixedString(Vec<u8>),
+    /// Low cardinality string value
+    LowCardinality(String),
     /// Date value
     Date(chrono::NaiveDate),
     /// DateTime value
@@ -539,6 +547,7 @@ impl std::fmt::Display for Value {
             Value::Float64(v) => write!(f, "{}", v),
             Value::String(v) => write!(f, "{}", v),
             Value::FixedString(v) => write!(f, "{:?}", v),
+            Value::LowCardinality(v) => write!(f, "{}", v),
             Value::Date(v) => write!(f, "{}", v),
             Value::DateTime(v) => write!(f, "{}", v),
             Value::DateTime64(v) => write!(f, "{}", v),
@@ -577,6 +586,7 @@ impl std::fmt::Display for Value {
                 write!(f, "}}")
             }
             Value::UUID(v) => write!(f, "{}", v),
+            Value::Null => write!(f, "NULL"),
         }
     }
 }
