@@ -7,6 +7,11 @@ A high-performance, async Rust client library for ClickHouse database.
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.70+-blue.svg)](https://www.rust-lang.org/)
 
+
+**DO NOT USE - WORK IN PROGESS - PLAN TO HAVE THIS READY BY 1st September 2025**
+
+**Note**: This is a work in progress. The API may change as we approach the 1.0 release.
+
 ## Features
 
 - **Async/Await Support**: Built with Tokio for high-performance async operations
