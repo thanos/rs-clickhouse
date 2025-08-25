@@ -9,6 +9,7 @@ A high-performance, async Rust client library for ClickHouse database.
 
 
 **DO NOT USE - WORK IN PROGESS - PLAN TO HAVE THIS READY BY 1st September 2025**
+
 **Note**: This is a work in progress. The API may change as we approach the 1.0 release.
 
 ## Features
