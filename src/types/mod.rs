@@ -631,6 +631,7 @@ impl Value {
             Value::Tuple(_) => "Tuple",
             Value::Map(_) => "Map",
             Value::UUID(_) => "UUID",
+            Value::Null => "Null",
 
         }
     }

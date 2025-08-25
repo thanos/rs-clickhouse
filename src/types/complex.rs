@@ -615,18 +615,18 @@ impl<T> IntoIterator for Array<T> {
     }
 }
 
-impl<T> IntoIterator for &Array<T> {
-    type Item = &T;
-    type IntoIter = std::slice::Iter<T>;
+impl<'a, T> IntoIterator for &'a Array<T> {
+    type Item = &'a T;
+    type IntoIter = std::slice::Iter<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter()
     }
 }
 
-impl<T> IntoIterator for &mut Array<T> {
-    type Item = &mut T;
-    type IntoIter = std::slice::IterMut<T>;
+impl<'a, T> IntoIterator for &'a mut Array<T> {
+    type Item = &'a mut T;
+    type IntoIter = std::slice::IterMut<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter_mut()

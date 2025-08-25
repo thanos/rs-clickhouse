@@ -206,7 +206,7 @@ impl TryFrom<Value> for String {
             Value::FixedString(bytes) => {
                 std::string::String::from_utf8(bytes)
                     .map(String)
-                    .map_err(|e| format!("Invalid UTF-8: {}", e))
+                    .map_err(|e| String(format!("Invalid UTF-8: {}", e)))
             }
             Value::UInt8(v) => Ok(String(v.to_string())),
             Value::UInt16(v) => Ok(String(v.to_string())),
@@ -222,7 +222,7 @@ impl TryFrom<Value> for String {
             Value::DateTime(dt) => Ok(String(dt.format("%Y-%m-%d %H:%M:%S").to_string())),
             Value::DateTime64(dt) => Ok(String(dt.format("%Y-%m-%d %H:%M:%S").to_string())),
             Value::UUID(u) => Ok(String(u.to_string())),
-            _ => Err(format!("Cannot convert {} to String", value.type_name())),
+            _ => Err(String(format!("Cannot convert {} to String", value.type_name()))),
         }
     }
 }
@@ -244,7 +244,7 @@ impl TryFrom<Value> for FixedString {
             Value::Int64(v) => Ok(FixedString(v.to_string().into_bytes())),
             Value::Float32(v) => Ok(FixedString(v.to_string().into_bytes())),
             Value::Float64(v) => Ok(FixedString(v.to_string().into_bytes())),
-            _ => Err(format!("Cannot convert {} to FixedString", value.type_name())),
+            _ => Err(String(format!("Cannot convert {} to FixedString", value.type_name()))),
         }
     }
 }

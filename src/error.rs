@@ -149,14 +149,8 @@ impl From<std::net::AddrParseError> for Error {
     }
 }
 
-impl From<lz4::Error> for Error {
-    fn from(err: lz4::Error) -> Self {
-        Error::Compression(err.to_string())
-    }
-}
-
-impl From<zstd::Error> for Error {
-    fn from(err: zstd::Error) -> Self {
+impl From<std::io::Error> for Error {
+    fn from(err: std::io::Error) -> Self {
         Error::Compression(err.to_string())
     }
 }
