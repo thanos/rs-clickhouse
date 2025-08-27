@@ -4,11 +4,13 @@ mod connection;
 mod options;
 mod pool;
 mod query;
+mod grpc;
 
 pub use connection::Connection;
 pub use options::ClientOptions;
 pub use pool::ConnectionPool;
 pub use query::{Query, QueryResult, QuerySettings, QueryMetadata, QueryStats};
+pub use grpc::GrpcClient;
 
 
 use crate::error::{Error, Result};
@@ -137,6 +139,11 @@ impl Client {
     /// Get the connection pool
     pub fn pool(&self) -> &Arc<ConnectionPool> {
         &self.pool
+    }
+
+    /// Create a GRPC client with the same options
+    pub fn grpc_client(&self) -> Result<GrpcClient> {
+        GrpcClient::new(self.options.clone())
     }
 }
 

@@ -793,4 +793,311 @@ mod tests {
         assert_eq!(original.password, deserialized.password);
         assert_eq!(original.protocol_version, deserialized.protocol_version);
     }
+
+    #[test]
+    fn test_client_hello_default() {
+        let hello = ClientHello::default();
+        assert_eq!(hello.client_name, "clickhouse-rust-client");
+        assert_eq!(hello.database, super::super::constants::DEFAULT_DATABASE);
+        assert_eq!(hello.username, super::super::constants::DEFAULT_USERNAME);
+        assert_eq!(hello.password, super::super::constants::DEFAULT_PASSWORD);
+        assert_eq!(hello.protocol_version, super::super::constants::DEFAULT_PROTOCOL_VERSION);
+    }
+
+    #[test]
+    fn test_client_hello_with_client_query_info() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_client_query_info("test-info");
+        assert_eq!(hello.client_query_info, Some("test-info".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_with_client_query_info_version() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_client_query_info_version(42);
+        assert_eq!(hello.client_query_info_version, Some(42));
+    }
+
+    #[test]
+    fn test_client_hello_with_client_query_info_kind() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_client_query_info_kind("test-kind");
+        assert_eq!(hello.client_query_info_kind, Some("test-kind".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_with_initial_user() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_initial_user("initial-user");
+        assert_eq!(hello.client_query_info_initial_user, Some("initial-user".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_with_initial_query_id() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_initial_query_id("query-123");
+        assert_eq!(hello.client_query_info_initial_query_id, Some("query-123".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_with_initial_address() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_initial_address("127.0.0.1:9000");
+        assert_eq!(hello.client_query_info_initial_address, Some("127.0.0.1:9000".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_with_quota_key() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_quota_key("quota-key");
+        assert_eq!(hello.client_query_info_quota_key, Some("quota-key".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_with_os_user() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_os_user("os-user");
+        assert_eq!(hello.client_query_info_os_user, Some("os-user".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_with_client_hostname() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_client_hostname("hostname");
+        assert_eq!(hello.client_query_info_client_hostname, Some("hostname".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_with_client_name() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_client_name("client-name");
+        assert_eq!(hello.client_query_info_client_name, Some("client-name".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_with_client_version() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_client_version("1.0.0");
+        assert_eq!(hello.client_query_info_client_version, Some("1.0.0".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_with_client_version_numbers() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_client_version_numbers(2, 1, 3, 42);
+        assert_eq!(hello.client_query_info_client_version_major, Some(2));
+        assert_eq!(hello.client_query_info_client_version_minor, Some(1));
+        assert_eq!(hello.client_query_info_client_version_patch, Some(3));
+        assert_eq!(hello.client_query_info_client_revision, Some(42));
+    }
+
+    #[test]
+    fn test_client_hello_with_interface() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_interface("CLI");
+        assert_eq!(hello.client_query_info_interface, Some("CLI".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_with_http_user_agent() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_http_user_agent("Mozilla/5.0");
+        assert_eq!(hello.client_query_info_http_user_agent, Some("Mozilla/5.0".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_with_http_referer() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_http_referer("https://example.com");
+        assert_eq!(hello.client_query_info_http_referer, Some("https://example.com".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_with_forward() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_forward("for=192.0.2.60");
+        assert_eq!(hello.client_query_info_forward, Some("for=192.0.2.60".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_with_forwarded_for() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_forwarded_for("192.0.2.60");
+        assert_eq!(hello.client_query_info_forwarded_for, Some("192.0.2.60".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_with_forwarded_proto() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_forwarded_proto("https");
+        assert_eq!(hello.client_query_info_forwarded_proto, Some("https".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_with_forwarded_host() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_forwarded_host("example.com");
+        assert_eq!(hello.client_query_info_forwarded_host, Some("example.com".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_with_forwarded_port() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_forwarded_port(443);
+        assert_eq!(hello.client_query_info_forwarded_port, Some(443));
+    }
+
+    #[test]
+    fn test_client_hello_with_forwarded_server() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_forwarded_server("server1");
+        assert_eq!(hello.client_query_info_forwarded_server, Some("server1".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_with_forwarded_uri() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_forwarded_uri("/api/v1");
+        assert_eq!(hello.client_query_info_forwarded_uri, Some("/api/v1".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_with_forwarded_method() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_forwarded_method("POST");
+        assert_eq!(hello.client_query_info_forwarded_method, Some("POST".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_with_forwarded_path() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_forwarded_path("/api/v1/users");
+        assert_eq!(hello.client_query_info_forwarded_path, Some("/api/v1/users".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_with_forwarded_query() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_forwarded_query("id=123");
+        assert_eq!(hello.client_query_info_forwarded_query, Some("id=123".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_with_forwarded_fragment() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_forwarded_fragment("section1");
+        assert_eq!(hello.client_query_info_forwarded_fragment, Some("section1".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_with_forwarded_username() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_forwarded_username("forwarded-user");
+        assert_eq!(hello.client_query_info_forwarded_username, Some("forwarded-user".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_with_forwarded_password() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_forwarded_password("forwarded-pass");
+        assert_eq!(hello.client_query_info_forwarded_password, Some("forwarded-pass".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_builder_pattern() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass")
+            .with_version(2, 1, 3, 42)
+            .with_protocol_version(54328)
+            .with_client_query_info("test-info")
+            .with_client_query_info_version(42)
+            .with_client_query_info_kind("test-kind")
+            .with_initial_user("initial-user")
+            .with_initial_query_id("query-123")
+            .with_initial_address("127.0.0.1:9000")
+            .with_quota_key("quota-key")
+            .with_os_user("os-user")
+            .with_client_hostname("hostname")
+            .with_client_name("client-name")
+            .with_client_version("1.0.0")
+            .with_client_version_numbers(2, 1, 3, 42)
+            .with_interface("CLI")
+            .with_http_user_agent("Mozilla/5.0")
+            .with_http_referer("https://example.com")
+            .with_forward("for=192.0.2.60")
+            .with_forwarded_for("192.0.2.60")
+            .with_forwarded_proto("https")
+            .with_forwarded_host("example.com")
+            .with_forwarded_port(443)
+            .with_forwarded_server("server1")
+            .with_forwarded_uri("/api/v1")
+            .with_forwarded_method("POST")
+            .with_forwarded_path("/api/v1/users")
+            .with_forwarded_query("id=123")
+            .with_forwarded_fragment("section1")
+            .with_forwarded_username("forwarded-user")
+            .with_forwarded_password("forwarded-pass");
+
+        // Verify all fields are set correctly
+        assert_eq!(hello.client_name, "test-client");
+        assert_eq!(hello.database, "test-db");
+        assert_eq!(hello.username, "test-user");
+        assert_eq!(hello.password, "test-pass");
+        assert_eq!(hello.protocol_version, 54328);
+        assert_eq!(hello.client_version_major, 2);
+        assert_eq!(hello.client_version_minor, 1);
+        assert_eq!(hello.client_version_patch, 3);
+        assert_eq!(hello.client_revision, 42);
+        assert_eq!(hello.client_query_info, Some("test-info".to_string()));
+        assert_eq!(hello.client_query_info_version, Some(42));
+        assert_eq!(hello.client_query_info_kind, Some("test-kind".to_string()));
+        assert_eq!(hello.client_query_info_initial_user, Some("initial-user".to_string()));
+        assert_eq!(hello.client_query_info_initial_query_id, Some("query-123".to_string()));
+        assert_eq!(hello.client_query_info_initial_address, Some("127.0.0.1:9000".to_string()));
+        assert_eq!(hello.client_query_info_quota_key, Some("quota-key".to_string()));
+        assert_eq!(hello.client_query_info_os_user, Some("os-user".to_string()));
+        assert_eq!(hello.client_query_info_client_hostname, Some("hostname".to_string()));
+        assert_eq!(hello.client_query_info_client_name, Some("client-name".to_string()));
+        assert_eq!(hello.client_query_info_client_version, Some("1.0.0".to_string()));
+        assert_eq!(hello.client_query_info_client_version_major, Some(2));
+        assert_eq!(hello.client_query_info_client_version_minor, Some(1));
+        assert_eq!(hello.client_query_info_client_version_patch, Some(3));
+        assert_eq!(hello.client_query_info_client_revision, Some(42));
+        assert_eq!(hello.client_query_info_interface, Some("CLI".to_string()));
+        assert_eq!(hello.client_query_info_http_user_agent, Some("Mozilla/5.0".to_string()));
+        assert_eq!(hello.client_query_info_http_referer, Some("https://example.com".to_string()));
+        assert_eq!(hello.client_query_info_forward, Some("for=192.0.2.60".to_string()));
+        assert_eq!(hello.client_query_info_forwarded_for, Some("192.0.2.60".to_string()));
+        assert_eq!(hello.client_query_info_forwarded_proto, Some("https".to_string()));
+        assert_eq!(hello.client_query_info_forwarded_host, Some("example.com".to_string()));
+        assert_eq!(hello.client_query_info_forwarded_port, Some(443));
+        assert_eq!(hello.client_query_info_forwarded_server, Some("server1".to_string()));
+        assert_eq!(hello.client_query_info_forwarded_uri, Some("/api/v1".to_string()));
+        assert_eq!(hello.client_query_info_forwarded_method, Some("POST".to_string()));
+        assert_eq!(hello.client_query_info_forwarded_path, Some("/api/v1/users".to_string()));
+        assert_eq!(hello.client_query_info_forwarded_query, Some("id=123".to_string()));
+        assert_eq!(hello.client_query_info_forwarded_fragment, Some("section1".to_string()));
+        assert_eq!(hello.client_query_info_forwarded_username, Some("forwarded-user".to_string()));
+        assert_eq!(hello.client_query_info_forwarded_password, Some("forwarded-pass".to_string()));
+    }
+
+    #[test]
+    fn test_client_hello_debug() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass");
+        let debug_str = format!("{:?}", hello);
+        assert!(debug_str.contains("test-client"));
+        assert!(debug_str.contains("test-db"));
+        assert!(debug_str.contains("test-user"));
+        // Note: password might be redacted in debug output for security
+    }
+
+    #[test]
+    fn test_client_hello_clone() {
+        let hello = ClientHello::new("test-client", "test-db", "test-user", "test-pass");
+        let cloned = hello.clone();
+        assert_eq!(hello.client_name, cloned.client_name);
+        assert_eq!(hello.database, cloned.database);
+        assert_eq!(hello.username, cloned.username);
+        assert_eq!(hello.password, cloned.password);
+        assert_eq!(hello.protocol_version, cloned.protocol_version);
+    }
 }

@@ -28,6 +28,11 @@ url = "2.0"
 http = "0.2"
 httparse = "1.0"
 
+# GRPC support
+tonic = "0.10"
+prost = "0.12"
+prost-types = "0.12"
+
 # Compression
 lz4 = "1.0"
 zstd = "0.12"

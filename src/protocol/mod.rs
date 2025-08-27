@@ -22,12 +22,12 @@ pub use server_end_of_stream::ServerEndOfStream;
 
 use crate::error::{Error, Result};
 use crate::types::{Block, Value};
-use bytes::BytesMut;
+use bytes::{BytesMut, BufMut};
 use std::io;
 
 /// ClickHouse protocol packet types
 #[repr(u64)]
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone, Copy)]
 pub enum PacketType {
     /// Client hello packet
     ClientHello = 0,
@@ -423,7 +423,7 @@ mod tests {
         
         // Verify the written data contains header and body
         let written_data = writer.writer;
-        assert_eq!(written_data.len(), 24); // 16 bytes header + 4 bytes body
+        assert_eq!(written_data.len(), 20); // 16 bytes header (8 bytes packet type + 8 bytes size) + 4 bytes body
     }
 
     #[test]
@@ -462,6 +462,197 @@ mod tests {
     }
 
     #[test]
+    fn test_protocol_reader_read_packet_server_hello() {
+        let mut data = Vec::new();
+        
+        // Write ServerHello packet type (100)
+        data.extend_from_slice(&100u64.to_le_bytes());
+        data.extend_from_slice(&8u64.to_le_bytes()); // size
+        data.extend_from_slice(b"testdata");
+        
+        let mut reader = ProtocolReader::new(Cursor::new(data));
+        let result = reader.read_packet();
+        
+        // This should fail because the test data is not valid ServerHello data
+        // but it should at least attempt to deserialize it
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_protocol_reader_read_packet_server_data() {
+        let mut data = Vec::new();
+        
+        // ProtocolReader reads 16 bytes for header first, then the body
+        // Header: 8 bytes packet type + 8 bytes size
+        data.extend_from_slice(&101u64.to_le_bytes()); // ServerData packet type
+        data.extend_from_slice(&23u64.to_le_bytes());  // size (23 bytes for minimal ServerData)
+        
+        // Body: valid ServerData format (23 bytes)
+        // Block info: 1 byte (is_overflows) + 4 bytes (bucket_num) + 1 byte (is_bucket_number)
+        data.push(0); // is_overflows = false
+        data.extend_from_slice(&(-1i32).to_le_bytes()); // bucket_num = -1 (no bucket)
+        data.push(0); // is_bucket_number = false
+        
+        // Compression method: 8 bytes (length) + 0 bytes (empty string)
+        data.extend_from_slice(&0u64.to_le_bytes()); // length = 0
+        
+        // Compression level: 1 byte
+        data.push(0); // level = 0 (none)
+        
+        // Block size: 8 bytes
+        data.extend_from_slice(&0u64.to_le_bytes()); // block_size = 0
+        
+        // Verify our data structure: 16 bytes header + 23 bytes body = 39 bytes total
+        assert_eq!(data.len(), 39);
+        
+        let mut reader = ProtocolReader::new(Cursor::new(data));
+        let result = reader.read_packet();
+        
+        // This should now succeed because we have valid ServerData format
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_protocol_reader_read_packet_server_exception() {
+        let mut data = Vec::new();
+        
+        // ProtocolReader reads 16 bytes for header first, then the body
+        // Header: 8 bytes packet type + 8 bytes size
+        data.extend_from_slice(&102u64.to_le_bytes()); // ServerException packet type
+        data.extend_from_slice(&44u64.to_le_bytes());  // size (44 bytes for minimal ServerException)
+        
+        // Body: valid ServerException format (44 bytes)
+        // Message: 8 bytes (length) + 4 bytes (content)
+        data.extend_from_slice(&4u64.to_le_bytes()); // message length = 4
+        data.extend_from_slice(b"test"); // message content
+        
+        // Code: 4 bytes
+        data.extend_from_slice(&1000u32.to_le_bytes()); // exception code
+        
+        // Name: 8 bytes (length) + 4 bytes (content)
+        data.extend_from_slice(&4u64.to_le_bytes()); // name length = 4
+        data.extend_from_slice(b"Test"); // name content
+        
+        // Stack trace: 8 bytes (length) + 0 bytes (empty)
+        data.extend_from_slice(&0u64.to_le_bytes()); // stack trace length = 0
+        
+        // Nested exception: 8 bytes (flag) + 0 bytes (no nested)
+        data.extend_from_slice(&0u64.to_le_bytes()); // no nested exception
+        
+        // Verify our data structure: 16 bytes header + 44 bytes body = 60 bytes total
+        assert_eq!(data.len(), 60);
+        
+        let mut reader = ProtocolReader::new(Cursor::new(data));
+        let result = reader.read_packet();
+        
+        // This should now succeed because we have valid ServerException format
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_protocol_reader_read_packet_server_progress() {
+        let mut data = Vec::new();
+        
+        // ProtocolReader reads 16 bytes for header first, then the body
+        // Header: 8 bytes packet type + 8 bytes size
+        data.extend_from_slice(&103u64.to_le_bytes()); // ServerProgress packet type
+        data.extend_from_slice(&112u64.to_le_bytes()); // size (112 bytes for ServerProgress)
+        
+        // Body: valid ServerProgress format (112 bytes)
+        // All fields are u64 (8 bytes) except threads and peak_threads which are u32 (4 bytes)
+        data.extend_from_slice(&0u64.to_le_bytes()); // rows
+        data.extend_from_slice(&0u64.to_le_bytes()); // bytes
+        data.extend_from_slice(&0u64.to_le_bytes()); // total_rows
+        data.extend_from_slice(&0u64.to_le_bytes()); // elapsed_ns
+        data.extend_from_slice(&0u64.to_le_bytes()); // read_rows_per_second
+        data.extend_from_slice(&0u64.to_le_bytes()); // read_bytes_per_second
+        data.extend_from_slice(&0u64.to_le_bytes()); // total_rows_approx
+        data.extend_from_slice(&0u64.to_le_bytes()); // written_rows
+        data.extend_from_slice(&0u64.to_le_bytes()); // written_bytes
+        data.extend_from_slice(&0u64.to_le_bytes()); // written_rows_per_second
+        data.extend_from_slice(&0u64.to_le_bytes()); // written_bytes_per_second
+        data.extend_from_slice(&0u64.to_le_bytes()); // memory_usage
+        data.extend_from_slice(&0u64.to_le_bytes()); // peak_memory_usage
+        data.extend_from_slice(&1u32.to_le_bytes()); // threads
+        data.extend_from_slice(&1u32.to_le_bytes()); // peak_threads
+        
+        // Verify our data structure: 16 bytes header + 112 bytes body = 128 bytes total
+        assert_eq!(data.len(), 128);
+        
+        let mut reader = ProtocolReader::new(Cursor::new(data));
+        let result = reader.read_packet();
+        
+        // This should now succeed because we have valid ServerProgress format
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_protocol_reader_read_packet_server_pong() {
+        let mut data = Vec::new();
+        
+        // ProtocolReader reads 16 bytes for header first, then the body
+        // Header: 8 bytes packet type + 8 bytes size
+        data.extend_from_slice(&104u64.to_le_bytes()); // ServerPong packet type
+        data.extend_from_slice(&41u64.to_le_bytes());  // size (41 bytes for minimal ServerPong)
+        
+        // Body: valid ServerPong format (41 bytes)
+        // Timestamp: 8 bytes
+        data.extend_from_slice(&1000000000u64.to_le_bytes()); // timestamp
+        
+        // Uptime: 8 bytes
+        data.extend_from_slice(&3600u64.to_le_bytes()); // uptime
+        
+        // Version: 8 bytes (length) + 5 bytes (content)
+        data.extend_from_slice(&5u64.to_le_bytes()); // version length = 5
+        data.extend_from_slice(b"1.0.0"); // version content (5 bytes)
+        
+        // Server name: 8 bytes (length) + 4 bytes (content)
+        data.extend_from_slice(&4u64.to_le_bytes()); // server name length = 4
+        data.extend_from_slice(b"Test"); // server name content (4 bytes)
+        
+        // Verify our data structure: 16 bytes header + 41 bytes body = 57 bytes total
+        assert_eq!(data.len(), 57);
+        
+        let mut reader = ProtocolReader::new(Cursor::new(data));
+        let result = reader.read_packet();
+        
+        // This should now succeed because we have valid ServerPong format
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_protocol_reader_read_packet_server_end_of_stream() {
+        let mut data = Vec::new();
+        
+        // ProtocolReader reads 16 bytes for header first, then the body
+        // Header: 8 bytes packet type + 8 bytes size
+        data.extend_from_slice(&105u64.to_le_bytes()); // ServerEndOfStream packet type
+        data.extend_from_slice(&32u64.to_le_bytes());  // size (32 bytes for minimal ServerEndOfStream)
+        
+        // Body: valid ServerEndOfStream format (32 bytes)
+        // Query ID: 8 bytes (length) + 0 bytes (empty)
+        data.extend_from_slice(&0u64.to_le_bytes()); // query ID length = 0
+        
+        // Final stats: 8 bytes (flag) + 0 bytes (no final stats)
+        data.extend_from_slice(&0u64.to_le_bytes()); // no final stats
+        
+        // End reason: 8 bytes
+        data.extend_from_slice(&0u64.to_le_bytes()); // EndReason::Normal
+        
+        // Message: 8 bytes (length) + 0 bytes (empty)
+        data.extend_from_slice(&0u64.to_le_bytes()); // message length = 0
+        
+        // Verify our data structure: 16 bytes header + 32 bytes body = 48 bytes total
+        assert_eq!(data.len(), 48);
+        
+        let mut reader = ProtocolReader::new(Cursor::new(data));
+        let result = reader.read_packet();
+        
+        // This should now succeed because we have valid ServerEndOfStream format
+        assert!(result.is_ok());
+    }
+
+    #[test]
     fn test_protocol_constants() {
         // Test constants module values
         assert_eq!(constants::DEFAULT_PROTOCOL_VERSION, 54428);
@@ -472,6 +663,50 @@ mod tests {
         assert_eq!(constants::DEFAULT_CLIENT_VERSION, 1);
         assert_eq!(constants::MAX_PACKET_SIZE, 1024 * 1024 * 1024);
         assert_eq!(constants::DEFAULT_COMPRESSION_THRESHOLD, 1024);
+    }
+
+    #[test]
+    fn test_protocol_writer_buffer_operations() {
+        let mut writer = ProtocolWriter::new(Vec::new());
+        
+        // Test buffer clearing
+        writer.buffer.put_slice(b"test data");
+        assert_eq!(writer.buffer.len(), 9);
+        
+        writer.buffer.clear();
+        assert_eq!(writer.buffer.len(), 0);
+    }
+
+    #[test]
+    fn test_protocol_reader_buffer_operations() {
+        let data = b"test data";
+        let cursor = Cursor::new(data);
+        let mut reader = ProtocolReader::new(cursor);
+        
+        // Test buffer resizing
+        reader.buffer.resize(10, 0);
+        assert_eq!(reader.buffer.len(), 10);
+        
+        // Test buffer clearing
+        reader.buffer.clear();
+        assert_eq!(reader.buffer.len(), 0);
+    }
+
+    #[test]
+    fn test_packet_type_debug() {
+        // Test Debug trait implementation
+        let packet_type = PacketType::ClientHello;
+        let debug_str = format!("{:?}", packet_type);
+        assert_eq!(debug_str, "ClientHello");
+    }
+
+    #[test]
+    fn test_packet_type_partial_eq() {
+        // Test PartialEq trait implementation
+        assert_eq!(PacketType::ClientHello, PacketType::ClientHello);
+        assert_ne!(PacketType::ClientHello, PacketType::ClientQuery);
+        assert_eq!(PacketType::ServerData, PacketType::ServerData);
+        assert_ne!(PacketType::ServerData, PacketType::ServerException);
     }
 
     // Mock implementations for testing

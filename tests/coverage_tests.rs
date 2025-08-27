@@ -5,6 +5,7 @@
 use clickhouse_rs::client::ClientOptions;
 use clickhouse_rs::error::Error;
 use clickhouse_rs::types::{Block, Column, Value, ColumnData};
+use clickhouse_rs::client::GrpcClient;
 use std::time::Duration;
 
 mod common;
@@ -202,6 +203,38 @@ fn test_client_options_coverage() {
     assert!(!default_options.use_http);
     assert_eq!(default_options.max_connections, 10);
     assert_eq!(default_options.min_connections, 2);
+
+    // Test connection string building
+    let options = ClientOptions::new()
+        .host("example.com")
+        .port(9000);
+
+    let conn_string = options.build_connection_string();
+    assert_eq!(conn_string, "example.com:9000");
+
+    // Test GRPC connection string
+    let options = ClientOptions::new()
+        .host("grpc.example.com")
+        .enable_grpc()
+        .grpc_port(9090);
+
+    let conn_string = options.build_connection_string();
+    assert_eq!(conn_string, "grpc://grpc.example.com:9090");
+
+    // Test that GRPC takes priority over other protocols
+    let options = options
+        .enable_http()
+        .enable_websocket();
+
+    let conn_string = options.build_connection_string();
+    assert_eq!(conn_string, "grpc://grpc.example.com:9090");
+
+    // Test GRPC client creation
+    let grpc_client = GrpcClient::new(options.clone()).unwrap();
+    assert_eq!(grpc_client.options().host, "grpc.example.com");
+    assert_eq!(grpc_client.options().grpc_port, 9090);
+    assert!(!grpc_client.is_connected());
+    assert!(!grpc_client.id().is_empty());
 }
 
 /// Test coverage for edge cases and error conditions
