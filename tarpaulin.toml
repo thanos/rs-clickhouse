@@ -1,0 +1,51 @@
+# Cargo Tarpaulin Configuration
+# This file configures how cargo-tarpaulin generates coverage reports
+
+[run]
+# Output formats
+out = ["Html", "Xml"]
+
+# Output directory
+output-dir = "coverage"
+
+# Include/exclude patterns
+# exclude = ["tests/*", "examples/*"]
+# include = ["src/*"]
+
+# Coverage threshold (percentage)
+# fail-under = 80.0
+
+# Timeout for tests (seconds)
+# timeout = 300
+
+# Number of threads for parallel execution
+# threads = 4
+
+# Verbose output
+verbose = true
+
+# Skip tests that require external services
+# skip-clean = false
+
+# Ignore panics in tests
+# ignore-panics = false
+
+# Ignore tests that fail
+# ignore-tests = false
+
+# Generate coverage for specific targets
+# target-dir = "target"
+
+# Additional arguments for cargo
+# cargo-args = ["--release"]
+
+# Environment variables
+# env = ["RUST_BACKTRACE=1"]
+
+# Coverage types
+# coverage-type = "Branch"
+
+# Output file names
+# html-name = "tarpaulin-report.html"
+# xml-name = "cobertura.xml"
+# markdown-name = "coverage-report.md"

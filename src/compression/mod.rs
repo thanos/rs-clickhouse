@@ -165,8 +165,11 @@ impl Compressor for ZstdCompressor {
     }
 
     fn decompress(&self, data: &[u8]) -> Result<Vec<u8>> {
-        let decompressed = zstd::bulk::decompress(data, 0)?;
-        Ok(decompressed)
+        // Try to decompress with a reasonable buffer size
+        let mut buffer = Vec::new();
+        let mut stream = zstd::stream::Decoder::new(data)?;
+        std::io::copy(&mut stream, &mut buffer)?;
+        Ok(buffer)
     }
 
     fn method(&self) -> CompressionMethod {

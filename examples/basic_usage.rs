@@ -1,6 +1,6 @@
 //! Basic usage example for ClickHouse Rust client
 
-use clickhouse_rust::{
+use clickhouse_rs::{
     Client, ClientOptions, Connection, ConnectionPool, Query, QuerySettings,
     types::{Block, Column, ColumnData, Value, UInt8, String as ClickHouseString},
     error::Result,
@@ -23,8 +23,8 @@ async fn main() -> Result<()> {
         .username("default")
         .password("")
         .timeout_secs(30)
-        .compression_method(clickhouse_rust::compression::CompressionMethod::LZ4)
-        .compression_level(clickhouse_rust::compression::CompressionLevel::default())
+        .compression_method(clickhouse_rs::compression::CompressionMethod::LZ4)
+        .compression_level(clickhouse_rs::compression::CompressionLevel::default())
         .pool_size(5);
 
     println!("Connecting to ClickHouse server...");

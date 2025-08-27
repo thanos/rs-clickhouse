@@ -835,6 +835,7 @@ impl Packet for ClientQuery {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::protocol::Packet;
     use crate::types::Value;
 
     #[test]
@@ -927,10 +928,10 @@ mod tests {
             .with_setting("max_memory_usage", Value::UInt64(1000000));
 
         let mut buf = BytesMut::new();
-        original.serialize(&mut buf).unwrap();
+        Packet::serialize(&original, &mut buf).unwrap();
 
         let mut read_buf = buf;
-        let deserialized = ClientQuery::deserialize(&mut read_buf).unwrap();
+        let deserialized = <ClientQuery as Packet>::deserialize(&mut read_buf).unwrap();
 
         assert_eq!(original.sql, deserialized.sql);
         assert_eq!(original.query_id, deserialized.query_id);

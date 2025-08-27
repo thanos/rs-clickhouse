@@ -383,7 +383,7 @@ impl Connection {
 fn extract_string(value: &Value) -> Option<std::string::String> {
     match value {
         Value::String(s) => Some(s.clone()),
-        Value::FixedString(bytes) => std::string::String::from_utf8(bytes.clone()).ok(),
+        Value::FixedString(bytes) => std::string::String::from_utf8(bytes.as_bytes().to_vec()).ok(),
         Value::UInt8(v) => Some(v.to_string()),
         Value::UInt16(v) => Some(v.to_string()),
         Value::UInt32(v) => Some(v.to_string()),

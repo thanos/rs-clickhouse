@@ -201,6 +201,7 @@ impl std::error::Error for ServerException {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::protocol::Packet;
 
     #[test]
     fn test_server_exception_new() {
@@ -267,10 +268,10 @@ mod tests {
             .with_nested(nested);
 
         let mut buf = BytesMut::new();
-        original.serialize(&mut buf).unwrap();
+        Packet::serialize(&original, &mut buf).unwrap();
 
         let mut read_buf = buf;
-        let deserialized = ServerException::deserialize(&mut read_buf).unwrap();
+        let deserialized = <ServerException as Packet>::deserialize(&mut read_buf).unwrap();
 
         assert_eq!(original.message, deserialized.message);
         assert_eq!(original.code, deserialized.code);

@@ -396,6 +396,7 @@ impl Packet for ServerProgress {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::protocol::Packet;
 
     #[test]
     fn test_server_progress_new() {
@@ -496,10 +497,10 @@ mod tests {
             .with_peak_threads(8);
 
         let mut buf = BytesMut::new();
-        original.serialize(&mut buf).unwrap();
+        Packet::serialize(&original, &mut buf).unwrap();
 
         let mut read_buf = buf;
-        let deserialized = ServerProgress::deserialize(&mut read_buf).unwrap();
+        let deserialized = <ServerProgress as Packet>::deserialize(&mut read_buf).unwrap();
 
         assert_eq!(original.rows, deserialized.rows);
         assert_eq!(original.bytes, deserialized.bytes);

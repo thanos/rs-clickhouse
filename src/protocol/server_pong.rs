@@ -56,6 +56,11 @@ impl ServerPong {
         self.timestamp / 1_000_000
     }
 
+    /// Get the timestamp in microseconds
+    pub fn timestamp_micros(&self) -> u64 {
+        self.timestamp / 1_000
+    }
+
     /// Get the uptime in seconds
     pub fn uptime(&self) -> u64 {
         self.uptime
@@ -203,6 +208,7 @@ impl Default for ServerPong {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::protocol::Packet;
 
     #[test]
     fn test_server_pong_new() {
@@ -264,10 +270,10 @@ mod tests {
         let original = ServerPong::new(1000000000, 3600, "1.0.0", "TestServer");
 
         let mut buf = BytesMut::new();
-        original.serialize(&mut buf).unwrap();
+        Packet::serialize(&original, &mut buf).unwrap();
 
         let mut read_buf = buf;
-        let deserialized = ServerPong::deserialize(&mut read_buf).unwrap();
+        let deserialized = <ServerPong as Packet>::deserialize(&mut read_buf).unwrap();
 
         assert_eq!(original.timestamp, deserialized.timestamp);
         assert_eq!(original.uptime, deserialized.uptime);
