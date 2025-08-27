@@ -99,19 +99,8 @@ impl TryFrom<Value> for FixedString {
 
     fn try_from(value: Value) -> Result<Self, Self::Error> {
         match value {
-            Value::FixedString(bytes) => Ok(FixedString(bytes)),
-            Value::String(s) => Ok(FixedString(s.into_bytes())),
-            Value::UInt8(v) => Ok(FixedString(v.to_string().into_bytes())),
-            Value::UInt16(v) => Ok(FixedString(v.to_string().into_bytes())),
-            Value::UInt32(v) => Ok(FixedString(v.to_string().into_bytes())),
-            Value::UInt64(v) => Ok(FixedString(v.to_string().into_bytes())),
-            Value::Int8(v) => Ok(FixedString(v.to_string().into_bytes())),
-            Value::Int16(v) => Ok(FixedString(v.to_string().into_bytes())),
-            Value::Int32(v) => Ok(FixedString(v.to_string().into_bytes())),
-            Value::Int64(v) => Ok(FixedString(v.to_string().into_bytes())),
-            Value::Float32(v) => Ok(FixedString(v.to_string().into_bytes())),
-            Value::Float64(v) => Ok(FixedString(v.to_string().into_bytes())),
-            _ => Err(String(format!("Cannot convert {} to FixedString", value.type_name()))),
+            Value::FixedString(bytes) => Ok(FixedString(bytes.to_vec())),
+            _ => Err(format!("Cannot convert {} to FixedString", value.type_name())),
         }
     }
 }
