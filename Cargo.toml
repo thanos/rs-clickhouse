@@ -81,10 +81,4 @@ path = "src/lib.rs"
 name = "basic_usage"
 path = "examples/basic_usage.rs"
 
-[[example]]
-name = "async_inserts"
-path = "examples/async_inserts.rs"
 
-[[example]]
-name = "external_data"
-path = "examples/external_data.rs"
