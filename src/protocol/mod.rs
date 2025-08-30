@@ -3,22 +3,36 @@
 mod client_hello;
 mod client_query;
 mod client_data;
+mod client_ping;
+mod client_cancel;
 mod server_hello;
 mod server_data;
 mod server_exception;
 mod server_progress;
 mod server_pong;
 mod server_end_of_stream;
+mod server_profile_info;
+mod version_negotiation;
+mod server_totals;
+mod server_extremes;
+mod server_log;
 
 pub use client_hello::ClientHello;
 pub use client_query::ClientQuery;
 pub use client_data::ClientData;
+pub use client_ping::ClientPing;
+pub use client_cancel::ClientCancel;
 pub use server_hello::ServerHello;
 pub use server_data::ServerData;
 pub use server_exception::ServerException;
 pub use server_progress::ServerProgress;
 pub use server_pong::ServerPong;
 pub use server_end_of_stream::ServerEndOfStream;
+pub use server_profile_info::ServerProfileInfo;
+pub use version_negotiation::{ProtocolVersion, ClientVersionNegotiation, ServerVersionNegotiation};
+pub use server_totals::ServerTotals;
+pub use server_extremes::ServerExtremes;
+pub use server_log::{ServerLog, LogLevel};
 
 use crate::error::{Error, Result};
 use crate::types::{Block, Value};
