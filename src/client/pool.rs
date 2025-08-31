@@ -435,6 +435,7 @@ mod tests {
     use std::time::Duration;
 
     #[tokio::test]
+    #[ignore = "This test requires a running ClickHouse server at localhost:9000 and can hang if server is unavailable"]
     async fn test_pool_creation() {
         let options = ClientOptions::new()
             .host("localhost")
@@ -453,6 +454,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "This test requires a running ClickHouse server at localhost:9000 and can hang if server is unavailable"]
     async fn test_pool_connection_borrowing() {
         let options = ClientOptions::new()
             .host("localhost")

@@ -57,6 +57,10 @@ pub struct ClientOptions {
     pub use_websocket: bool,
     /// WebSocket path
     pub websocket_path: String,
+    /// Whether to use GRPC interface
+    pub use_grpc: bool,
+    /// GRPC port
+    pub grpc_port: u16,
     /// Whether to use native protocol
     pub use_native_protocol: bool,
     /// Native protocol version
@@ -128,6 +132,8 @@ impl ClientOptions {
             use_http2: false,
             use_websocket: false,
             websocket_path: "/".to_string(),
+            use_grpc: false,
+            grpc_port: 9000,
             use_native_protocol: true,
             native_protocol_version: 54428,
             use_compression: true,
@@ -325,6 +331,24 @@ impl ClientOptions {
         self
     }
 
+    /// Enable GRPC interface
+    pub fn enable_grpc(mut self) -> Self {
+        self.use_grpc = true;
+        self
+    }
+
+    /// Disable GRPC interface
+    pub fn disable_grpc(mut self) -> Self {
+        self.use_grpc = false;
+        self
+    }
+
+    /// Set GRPC port
+    pub fn grpc_port(mut self, port: u16) -> Self {
+        self.grpc_port = port;
+        self
+    }
+
     /// Enable native protocol
     pub fn enable_native_protocol(mut self) -> Self {
         self.use_native_protocol = true;
@@ -501,7 +525,9 @@ impl ClientOptions {
 
     /// Build connection string
     pub fn build_connection_string(&self) -> String {
-        if self.use_http {
+        if self.use_grpc {
+            format!("grpc://{}:{}", self.host, self.grpc_port)
+        } else if self.use_http {
             let protocol = if self.use_http2 { "https" } else { "http" };
             format!("{}://{}:{}{}", protocol, self.host, self.port, self.http_path)
         } else if self.use_websocket {
@@ -520,6 +546,10 @@ impl ClientOptions {
 
         if self.port == 0 {
             return Err(Error::Configuration("Port cannot be 0".to_string()));
+        }
+
+        if self.use_grpc && self.grpc_port == 0 {
+            return Err(Error::Configuration("GRPC port cannot be 0".to_string()));
         }
 
         if self.database.is_empty() {
@@ -695,5 +725,152 @@ impl TracingLevel {
             TracingLevel::Debug => "debug",
             TracingLevel::Trace => "trace",
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_grpc_options() {
+        let options = ClientOptions::new()
+            .enable_grpc()
+            .grpc_port(9090);
+
+        assert!(options.use_grpc);
+        assert_eq!(options.grpc_port, 9090);
+        assert_eq!(options.grpc_port, 9090);
+    }
+
+    #[test]
+    fn test_grpc_options_disable() {
+        let options = ClientOptions::new()
+            .enable_grpc()
+            .grpc_port(9090)
+            .disable_grpc();
+
+        assert!(!options.use_grpc);
+        assert_eq!(options.grpc_port, 9090); // Port should remain set
+    }
+
+    #[test]
+    fn test_grpc_connection_string() {
+        let options = ClientOptions::new()
+            .host("clickhouse.example.com")
+            .enable_grpc()
+            .grpc_port(9090);
+
+        let conn_string = options.build_connection_string();
+        assert_eq!(conn_string, "grpc://clickhouse.example.com:9090");
+    }
+
+    #[test]
+    fn test_grpc_getters() {
+        let options = ClientOptions::new()
+            .host("test-host")
+            .port(1234)
+            .database("test-db")
+            .username("test-user")
+            .password("test-pass")
+            .connect_timeout(Duration::from_secs(30))
+            .query_timeout(Duration::from_secs(60))
+            .enable_grpc()
+            .grpc_port(9090);
+
+        assert_eq!(options.host, "test-host");
+        assert_eq!(options.port, 1234);
+        assert_eq!(options.database, "test-db");
+        assert_eq!(options.username, "test-user");
+        assert_eq!(options.password, "test-pass");
+        assert_eq!(options.connect_timeout, Duration::from_secs(30));
+        assert_eq!(options.query_timeout, Duration::from_secs(60));
+        assert_eq!(options.grpc_port, 9090);
+    }
+
+    #[test]
+    fn test_grpc_default_values() {
+        let options = ClientOptions::new();
+        
+        assert!(!options.use_grpc);
+        assert_eq!(options.grpc_port, 9000); // Default GRPC port
+        assert_eq!(options.grpc_port, 9000);
+    }
+
+    #[test]
+    fn test_grpc_options_builder_pattern() {
+        let options = ClientOptions::new()
+            .enable_grpc()
+            .grpc_port(9090)
+            .host("custom-host")
+            .port(9001)
+            .database("custom-db")
+            .username("custom-user")
+            .password("custom-pass");
+
+        assert!(options.use_grpc);
+        assert_eq!(options.grpc_port, 9090);
+        assert_eq!(options.host, "custom-host");
+        assert_eq!(options.port, 9001);
+        assert_eq!(options.database, "custom-db");
+        assert_eq!(options.username, "custom-user");
+        assert_eq!(options.password, "custom-pass");
+    }
+
+    #[test]
+    fn test_grpc_priority_over_other_protocols() {
+        let options = ClientOptions::new()
+            .enable_grpc()
+            .grpc_port(9090)
+            .enable_http()
+            .enable_websocket();
+
+        let conn_string = options.build_connection_string();
+        // GRPC should take priority
+        assert_eq!(conn_string, "grpc://localhost:9090");
+    }
+
+    #[test]
+    fn test_grpc_port_validation() {
+        let options = ClientOptions::new()
+            .enable_grpc()
+            .grpc_port(0); // Invalid port
+
+        // The validation should catch this
+        let validation_result = options.validate();
+        assert!(validation_result.is_err());
+        if let Err(Error::Configuration(msg)) = validation_result {
+            assert!(msg.contains("GRPC port cannot be 0"));
+        } else {
+            panic!("Expected Configuration error");
+        }
+    }
+
+    #[test]
+    fn test_grpc_options_clone() {
+        let options = ClientOptions::new()
+            .enable_grpc()
+            .grpc_port(9090);
+
+        let cloned_options = options.clone();
+        
+        assert_eq!(cloned_options.use_grpc, options.use_grpc);
+        assert_eq!(cloned_options.grpc_port, options.grpc_port);
+        assert_eq!(cloned_options.grpc_port, options.grpc_port);
+    }
+
+    #[test]
+    fn test_grpc_options_serialization() {
+        let options = ClientOptions::new()
+            .enable_grpc()
+            .grpc_port(9090);
+
+        // Test that the options can be serialized and deserialized
+        let serialized = serde_json::to_string(&options).unwrap();
+        let deserialized: ClientOptions = serde_json::from_str(&serialized).unwrap();
+
+        assert_eq!(deserialized.use_grpc, options.use_grpc);
+        assert_eq!(deserialized.grpc_port, options.grpc_port);
+        assert_eq!(deserialized.grpc_port, options.grpc_port);
     }
 }

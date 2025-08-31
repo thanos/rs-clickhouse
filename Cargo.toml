@@ -20,6 +20,7 @@ uuid = { version = "1.0", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+rand = "0.8"
 
 # Network and protocol
 tokio-tungstenite = { version = "0.20", features = ["native-tls"] }
@@ -27,6 +28,11 @@ tungstenite = { version = "0.20", features = ["native-tls"] }
 url = "2.0"
 http = "0.2"
 httparse = "1.0"
+
+# GRPC support
+tonic = "0.10"
+prost = "0.12"
+prost-types = "0.12"
 
 # Compression
 lz4 = "1.0"
@@ -76,10 +82,4 @@ path = "src/lib.rs"
 name = "basic_usage"
 path = "examples/basic_usage.rs"
 
-[[example]]
-name = "async_inserts"
-path = "examples/async_inserts.rs"
 
-[[example]]
-name = "external_data"
-path = "examples/external_data.rs"

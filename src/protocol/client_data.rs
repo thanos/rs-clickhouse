@@ -205,15 +205,17 @@ impl Packet for ClientData {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::protocol::Packet;
     use crate::types::{Block, Column, ColumnData, Value};
 
     fn create_test_block() -> Block {
         let mut block = Block::new();
         let column = Column::new(
             "test_column".to_string(),
+            "UInt8".to_string(),
             ColumnData::UInt8(vec![1, 2, 3, 4, 5]),
         );
-        block.add_column(column);
+        block.add_column("test_column", column);
         block
     }
 
@@ -276,10 +278,10 @@ mod tests {
             .with_compression_level(5);
 
         let mut buf = BytesMut::new();
-        original.serialize(&mut buf).unwrap();
+        Packet::serialize(&original, &mut buf).unwrap();
 
         let mut read_buf = buf;
-        let deserialized = ClientData::deserialize(&mut read_buf).unwrap();
+        let deserialized = <ClientData as Packet>::deserialize(&mut read_buf).unwrap();
 
         assert_eq!(original.table_name, deserialized.table_name);
         assert_eq!(original.database_name, deserialized.database_name);

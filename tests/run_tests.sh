@@ -86,6 +86,18 @@ run_integration_tests() {
     fi
 }
 
+# Run coverage tests
+run_coverage_tests() {
+    print_status "Running coverage tests..."
+    
+    if cargo test --test coverage_tests --no-default-features; then
+        print_success "Coverage tests passed!"
+    else
+        print_error "Coverage tests failed!"
+        exit 1
+    fi
+}
+
 # Run all tests
 run_all_tests() {
     print_status "Running all tests..."
@@ -159,6 +171,27 @@ show_coverage() {
     fi
 }
 
+# Show test coverage using cargo-tarpaulin
+show_tarpaulin_coverage() {
+    print_status "Checking test coverage with cargo-tarpaulin..."
+    
+    if command -v cargo-tarpaulin &> /dev/null; then
+        print_status "Generating coverage report with tarpaulin..."
+        
+        # Generate HTML coverage report
+        if cargo tarpaulin --out Html --output-dir coverage; then
+            print_success "HTML coverage report generated in coverage/ directory"
+            print_status "Open coverage/tarpaulin-report.html in your browser to view the report"
+        else
+            print_error "Failed to generate coverage report"
+            exit 1
+        fi
+    else
+        print_warning "cargo-tarpaulin not found. Install it with: cargo install cargo-tarpaulin"
+        print_status "Alternative: Install grcov for coverage: cargo install grcov"
+    fi
+}
+
 # Show help
 show_help() {
     echo "Usage: $0 [OPTION]"
@@ -166,9 +199,11 @@ show_help() {
     echo "Options:"
     echo "  unit              Run only unit tests"
     echo "  integration       Run only integration tests"
+    echo "  coverage          Run only coverage tests"
     echo "  all               Run all tests (default)"
     echo "  verbose           Run tests with verbose output"
-    echo "  coverage          Show test coverage"
+    echo "  coverage          Show test coverage (grcov)"
+    echo "  tarpaulin         Show test coverage (cargo-tarpaulin)"
     echo "  feature <name>    Run tests with specific feature"
     echo "  pattern <regex>   Run tests matching pattern"
     echo "  check             Check if ClickHouse is available"
@@ -178,10 +213,12 @@ show_help() {
     echo "  $0                    # Run all tests"
     echo "  $0 unit              # Run only unit tests"
     echo "  $0 integration       # Run only integration tests"
+    echo "  $0 coverage          # Run only coverage tests"
     echo "  $0 verbose           # Run tests with verbose output"
     echo "  $0 feature tls       # Run tests with TLS feature"
     echo "  $0 pattern 'block'   # Run tests containing 'block'"
-    echo "  $0 coverage          # Generate coverage report"
+    echo "  $0 coverage          # Generate coverage report (grcov)"
+    echo "  $0 tarpaulin         # Generate coverage report (tarpaulin)"
 }
 
 # Main execution
@@ -193,6 +230,9 @@ main() {
         "integration")
             run_integration_tests
             ;;
+        "coverage")
+            run_coverage_tests
+            ;;
         "all")
             check_clickhouse
             run_all_tests
@@ -200,8 +240,11 @@ main() {
         "verbose")
             run_verbose_tests
             ;;
-        "coverage")
+        "coverage-report")
             show_coverage
+            ;;
+        "tarpaulin")
+            show_tarpaulin_coverage
             ;;
         "feature")
             if [ -z "$2" ]; then
