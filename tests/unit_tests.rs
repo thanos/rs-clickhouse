@@ -1,4 +1,4 @@
-use clickhouse_rs::types::{Block, Value, ColumnData, Column, Row, fixed_string, lowcardinality};
+use clickhouse_rs::types::{Block, Value, ColumnData, Column, Row, FixedString, LowCardinality};
 use clickhouse_rs::error::Error;
 use std::collections::HashMap;
 
@@ -109,8 +109,8 @@ fn test_value_types_and_conversions() {
     
     // Test string types
     let string_val = Value::String("hello world".to_string());
-    let fixed_string_val = Value::FixedString(fixed_string::FixedString::from_string("fixed", 5));
-    let low_cardinality_val = Value::LowCardinality(lowcardinality::LowCardinality::new());
+    let fixed_string_val = Value::FixedString(FixedString::from_string("fixed", 5));
+    let low_cardinality_val = Value::LowCardinality(LowCardinality::new());
     
     // Test date/time types
     let date_val = Value::Date(chrono::NaiveDate::from_ymd_opt(2023, 1, 1).unwrap());

@@ -332,6 +332,7 @@ dependencies = [
  "postcard",
  "prost",
  "prost-types",
+ "rand",
  "rustls",
  "serde",
  "serde_json",

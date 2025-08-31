@@ -5,6 +5,7 @@ use std::time::Duration;
 
 mod common;
 mod grpc_tests;
+mod advanced_features_tests;
 use common::{create_test_client, create_test_http_client, is_clickhouse_available, wait_for_clickhouse};
 use grpc_tests::{create_test_grpc_client, create_test_block};
 
@@ -27,6 +28,7 @@ fn test_http_client_creation() {
 }
 
 #[test]
+#[ignore = "This test requires a running ClickHouse server and can hang if server is unavailable"]
 fn test_basic_connection() {
     let rt = tokio::runtime::Runtime::new().unwrap();
     rt.block_on(async {
@@ -57,6 +59,7 @@ fn test_basic_connection() {
 }
 
 #[test]
+#[ignore = "This test requires a running ClickHouse server and can hang if server is unavailable"]
 fn test_http_connection() {
     let rt = tokio::runtime::Runtime::new().unwrap();
     rt.block_on(async {
@@ -85,6 +88,7 @@ fn test_http_connection() {
 }
 
 #[test]
+#[ignore = "This test requires a running ClickHouse server and can hang if server is unavailable"]
 fn test_server_info() {
     let rt = tokio::runtime::Runtime::new().unwrap();
     rt.block_on(async {

@@ -1,10 +1,11 @@
 //! Basic usage example for ClickHouse Rust client
 
 use clickhouse_rs::{
-    Client, ClientOptions, Connection, ConnectionPool, Query, QuerySettings,
-    types::{Block, Column, ColumnData, Value, UInt8, String as ClickHouseString},
+    Client, ClientOptions, Connection, ConnectionPool,
+    types::{Block, Column, ColumnData},
     error::Result,
 };
+use clickhouse_rs::client::QuerySettings;
 use tokio;
 
 #[tokio::main]
@@ -22,10 +23,9 @@ async fn main() -> Result<()> {
         .database("default")
         .username("default")
         .password("")
-        .timeout_secs(30)
-        .compression_method(clickhouse_rs::compression::CompressionMethod::LZ4)
-        .compression_level(clickhouse_rs::compression::CompressionLevel::default())
-        .pool_size(5);
+        .connect_timeout(std::time::Duration::from_secs(30))
+
+        .max_connections(5);
 
     println!("Connecting to ClickHouse server...");
 
@@ -78,29 +78,32 @@ async fn main() -> Result<()> {
     // Add ID column
     let id_column = Column::new(
         "id".to_string(),
+        "UInt8".to_string(),
         ColumnData::UInt8(vec![1, 2, 3, 4, 5]),
     );
-    block.add_column(id_column);
+    block.add_column("id", id_column);
     
     // Add name column
     let name_column = Column::new(
         "name".to_string(),
+        "String".to_string(),
         ColumnData::String(vec![
-            ClickHouseString::new("Alice"),
-            ClickHouseString::new("Bob"),
-            ClickHouseString::new("Charlie"),
-            ClickHouseString::new("Diana"),
-            ClickHouseString::new("Eve"),
+            "Alice".to_string(),
+            "Bob".to_string(),
+            "Charlie".to_string(),
+            "Diana".to_string(),
+            "Eve".to_string(),
         ]),
     );
-    block.add_column(name_column);
+    block.add_column("name", name_column);
     
     // Add value column
     let value_column = Column::new(
         "value".to_string(),
+        "Float64".to_string(),
         ColumnData::Float64(vec![10.5, 20.3, 15.7, 8.9, 12.1]),
     );
-    block.add_column(value_column);
+    block.add_column("value", value_column);
 
     // Insert the data
     match client.insert("example_table", block).await {
@@ -110,16 +113,15 @@ async fn main() -> Result<()> {
 
     // Query the data
     println!("\nQuerying data...");
-    let query = Query::new("SELECT * FROM example_table ORDER BY id");
-    
-    match client.query(query).await {
+    match client.query("SELECT * FROM example_table ORDER BY id").await {
         Ok(result) => {
             println!("✓ Query executed successfully");
             println!("  Rows returned: {}", result.row_count());
-            println!("  Columns: {}", result.columns().len());
+            println!("  Columns: {}", result.columns().count());
             
             // Print column names
-            println!("  Column names: {:?}", result.columns());
+            let column_names: Vec<&str> = result.columns().map(|col| col.name.as_str()).collect();
+            println!("  Column names: {:?}", column_names);
             
             // Print first few rows
             if let Some(first_block) = result.first_block() {
@@ -133,13 +135,10 @@ async fn main() -> Result<()> {
     // Test with settings
     println!("\nTesting query with custom settings...");
     let settings = QuerySettings::new()
-        .timeout_secs(10)
+        .timeout(std::time::Duration::from_secs(10))
         .max_memory_usage(1024 * 1024 * 100); // 100MB
     
-    let query_with_settings = Query::new("SELECT COUNT(*) FROM example_table")
-        .settings(settings);
-    
-    match client.query(query_with_settings).await {
+    match client.query_with_settings("SELECT COUNT(*) FROM example_table", settings).await {
         Ok(result) => {
             println!("✓ Query with settings executed successfully");
             println!("  Rows returned: {}", result.row_count());
@@ -149,17 +148,13 @@ async fn main() -> Result<()> {
 
     // Test connection pool
     println!("\nTesting connection pool...");
-    let pool = ConnectionPool::new(options)?;
+    let pool = ConnectionPool::new(options.clone())?;
     
-    match pool.stats().await {
-        Ok(stats) => {
-            println!("✓ Connection pool stats:");
-            println!("  Total connections: {}", stats.total_connections);
-            println!("  Active connections: {}", stats.active_connections);
-            println!("  Idle connections: {}", stats.idle_connections);
-        }
-        Err(e) => println!("✗ Failed to get pool stats: {}", e),
-    }
+    let stats = pool.stats().await;
+    println!("✓ Connection pool stats:");
+    println!("  Total connections: {}", stats.total_connections);
+    println!("  Active connections: {}", stats.active_connections);
+    println!("  Total wait time: {:?}", stats.total_wait_time);
 
     // Test individual connection
     println!("\nTesting individual connection...");

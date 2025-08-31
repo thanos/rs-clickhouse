@@ -31,8 +31,21 @@
 //!     
 //!     // Process results
 //!     for row in result.rows() {
-//!         let number: i32 = row.get("number")?;
-//!         println!("Number: {}", number);
+//!         if let Some(value) = row.get(0) {
+//!             if let Some(number) = value.as_ref() {
+//!                 match number {
+//!                     clickhouse_rs::types::Value::Int32(num) => {
+//!                         println!("Number: {}", num);
+//!                     }
+//!                     clickhouse_rs::types::Value::UInt32(num) => {
+//!                         println!("Number: {}", num);
+//!                     }
+//!                     _ => {
+//!                         println!("Unexpected value type: {:?}", number);
+//!                     }
+//!                 }
+//!             }
+//!         }
 //!     }
 //!
 //!     Ok(())
